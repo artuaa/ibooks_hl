@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -68,6 +69,7 @@ func loadHighlights() ([]Highlight, error) {
 	}
 	return result, nil
 }
+
 func groupByTitle(hls []Highlight) map[string][]Highlight {
 	result := make(map[string][]Highlight)
 	for _, v := range hls {
@@ -80,15 +82,23 @@ func groupByTitle(hls []Highlight) map[string][]Highlight {
 }
 
 func saveToFile(path string, hls []Highlight) error {
-	f, err := os.OpenFile(path+".md", os.O_RDWR|os.O_CREATE, 0755)
+	_, err := os.Stat(path)
+	if err == nil {
+		log.Printf("Skip book notes '%s'. File already exists", path)
+		return nil
+	}
+	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
 		return err
 	}
 	for _, hls := range groupByTitle(hls) {
 		f.WriteString(fmt.Sprintf("# %s\n%s\n", hls[0].Title.String, hls[0].Author.String))
-		for _, v := range hls {
+		for i, v := range hls {
+			if i == 0 || v.Chapter.String != hls[i-1].Chapter.String && v.Chapter.String != "" {
+				f.WriteString(fmt.Sprintf("### %s\n", v.Chapter.String))
+			}
 			if v.Text.Valid {
-				f.WriteString(fmt.Sprintf("### %s\n> %s\n%s\n", v.Chapter.String, strings.Replace(v.Text.String, "\n", "\n> ", -1), v.Note.String))
+				f.WriteString(fmt.Sprintf("> %s\n%s\n", strings.Replace(v.Text.String, "\n", "\n> ", -1), v.Note.String))
 			}
 		}
 	}
@@ -101,9 +111,15 @@ func saveToFile(path string, hls []Highlight) error {
 func main() {
 	if len(os.Args) < 2 {
 		log.Fatal("Please specify notes path")
-		return
 	}
 	notes_path := os.Args[1]
+
+	cmd := exec.Command("mkdir", "-p", notes_path)
+	err := cmd.Run()
+	if err != nil{
+		log.Fatalf("Can't create target dirrectory '%s' %s", notes_path, err)
+	}
+
 	highlights, err := loadHighlights()
 	if err != nil {
 		log.Fatal(err)
@@ -112,7 +128,8 @@ func main() {
 		if len(hls) < 12 {
 			continue
 		}
-		err := saveToFile(notes_path+"/"+title, hls)
+		path := notes_path + "/" + title + ".md"
+		err := saveToFile(path, hls)
 		if err != nil {
 			log.Fatal(err)
 		}
