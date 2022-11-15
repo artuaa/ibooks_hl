@@ -92,7 +92,7 @@ func saveToFile(path string, hls []Highlight) error {
 		return err
 	}
 	for _, hls := range groupByTitle(hls) {
-		f.WriteString(fmt.Sprintf("# %s\n%s\n", hls[0].Title.String, hls[0].Author.String))
+		f.WriteString(fmt.Sprintf("# %s\n", hls[0].Author.String))
 		for i, v := range hls {
 			if i == 0 || v.Chapter.String != hls[i-1].Chapter.String && v.Chapter.String != "" {
 				f.WriteString(fmt.Sprintf("### %s\n", v.Chapter.String))
