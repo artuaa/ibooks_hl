@@ -20,7 +20,7 @@ func RunServer() error {
 //routes
 func root(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("content-type", "application/rss+xml")
-	rss, err := GenerateFeed(4)
+	rss, err := GenerateFeed(3)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 	} else {
@@ -28,5 +28,3 @@ func root(w http.ResponseWriter, req *http.Request) {
 		io.WriteString(w, rss)
 	}
 }
-
-

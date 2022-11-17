@@ -1,4 +1,4 @@
-module highligths
+module highlights
 
 go 1.18
 

@@ -1,6 +1,6 @@
 package main
 
-import "highligths/rss"
+import "highlights/rss"
 
 func main() {
 	err := rss.RunServer()

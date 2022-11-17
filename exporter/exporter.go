@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"highligths/ibooks"
+	"highlights/ibooks"
 
 	_ "github.com/mattn/go-sqlite3"
 )

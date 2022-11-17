@@ -1,7 +1,7 @@
 package rss
 
 import (
-	"highligths/ibooks"
+	"highlights/ibooks"
 	"log"
 	"math/rand"
 	"time"
@@ -14,22 +14,24 @@ func randomNotes(count int) ([]*feeds.Item, error) {
 	if err != nil {
 		return nil, err
 	}
-	rand.Seed(499)
 	result := []*feeds.Item{}
 	// HACK:
 	if len(hls) < count {
 		count = len(hls)
 	}
+	rand.Seed(time.Now().UnixNano())
+	now := time.Now()
+	// today := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, time.UTC)
 	for i := 0; i < count; i++ {
 		idx := rand.Intn(len(hls))
 		hl := hls[idx]
-		now := time.Now()
+
 		item := &feeds.Item{
 			Title:       hl.Title.String,
 			Description: hl.Text.String,
 			Link:        &feeds.Link{Href: "http://jmoiron.net/blog/limiting-concurrency-in-go/"},
-			Author:      &feeds.Author{Name: "Jason Moiron", Email: "jmoiron@jmoiron.net"},
-			Created:     now,
+			Author:      &feeds.Author{Name: hl.Author.String},
+			Created:     now.Add(-time.Second * time.Duration(i)), //today.Add(time.Duration(i)),
 		}
 		result = append(result, item)
 	}
@@ -38,6 +40,7 @@ func randomNotes(count int) ([]*feeds.Item, error) {
 
 func GenerateFeed(count int) (string, error) {
 	now := time.Now()
+
 	feed := &feeds.Feed{
 		Title: "Artua books highlights",
 		// TODO: add link

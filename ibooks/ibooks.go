@@ -40,6 +40,7 @@ func LoadHighlights() ([]Highlight, error) {
 	from ZAEANNOTATION
 	left join books.ZBKLIBRARYASSET
 	on ZAEANNOTATION.ZANNOTATIONASSETID = books.ZBKLIBRARYASSET.ZASSETID
+	where selected_text is not null
 	order by ZANNOTATIONASSETID, ZPLLOCATIONRANGESTART;`
 
 	db, err := sqlx.Connect("sqlite3", annotations_path)

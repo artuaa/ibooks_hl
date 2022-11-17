@@ -1,6 +1,6 @@
 package main
 
-import "highligths/exporter"
+import "highlights/exporter"
 
 func main() {
 	exporter.ExportNotes()
