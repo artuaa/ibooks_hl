@@ -2,6 +2,7 @@ package rss
 
 import (
 	"fmt"
+	"highlights/ibooks"
 	"io"
 	"net/http"
 )
@@ -19,8 +20,9 @@ func RunServer() error {
 
 //routes
 func root(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("content-type", "application/rss+xml")
-	rss, err := GenerateFeed(3)
+	w.Header().Set("content-type", "application/json")
+	r := New(&ibooks.IBooksStorage{})
+	rss, err := r.GenerateFeed(3)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 	} else {

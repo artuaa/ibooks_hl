@@ -10,6 +10,10 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+type Storage interface {
+	LoadHighlights() ([]Highlight, error)
+}
+
 type Highlight struct {
 	Note    sql.NullString `db:"note"`
 	Author  sql.NullString `db:"author"`
@@ -18,7 +22,11 @@ type Highlight struct {
 	Chapter sql.NullString `db:"chapter"`
 }
 
-func LoadHighlights() ([]Highlight, error) {
+type IBooksStorage struct {
+
+}
+
+func (s *IBooksStorage) LoadHighlights() ([]Highlight, error) {
 	homedir, err := os.UserHomeDir()
 	if err != nil {
 		return nil, err

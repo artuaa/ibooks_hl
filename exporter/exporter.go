@@ -48,8 +48,8 @@ func ExportNotes() {
 	if err != nil {
 		log.Fatalf("Can't create target directory '%s' %s", notes_path, err)
 	}
-
-	highlights, err := ibooks.LoadHighlights()
+	storage := ibooks.IBooksStorage{}
+	highlights, err := storage.LoadHighlights()
 	if err != nil {
 		log.Fatal(err)
 	}

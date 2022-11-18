@@ -4,13 +4,29 @@ import (
 	"highlights/ibooks"
 	"log"
 	"math/rand"
+	"net/url"
 	"time"
 
 	"github.com/gorilla/feeds"
 )
 
-func randomNotes(count int) ([]*feeds.Item, error) {
-	hls, err := ibooks.LoadHighlights()
+type RSS struct {
+	storage ibooks.Storage
+}
+
+func New(s ibooks.Storage) RSS {
+	return RSS{storage: s}
+}
+
+func makeObsidianUrl(title string) string {
+	v := url.Values{}
+	v.Add("file", "book_highligths/"+title+".md")
+	v.Add("vault", "vault")
+	return "obsidian://open?" + v.Encode()
+}
+
+func (r *RSS) randomNotes(count int) ([]*feeds.Item, error) {
+	hls, err := r.storage.LoadHighlights()
 	if err != nil {
 		return nil, err
 	}
@@ -21,7 +37,6 @@ func randomNotes(count int) ([]*feeds.Item, error) {
 	}
 	rand.Seed(time.Now().UnixNano())
 	now := time.Now()
-	// today := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, time.UTC)
 	for i := 0; i < count; i++ {
 		idx := rand.Intn(len(hls))
 		hl := hls[idx]
@@ -29,16 +44,16 @@ func randomNotes(count int) ([]*feeds.Item, error) {
 		item := &feeds.Item{
 			Title:       hl.Title.String,
 			Description: hl.Text.String,
-			Link:        &feeds.Link{Href: "http://jmoiron.net/blog/limiting-concurrency-in-go/"},
+			Link:        &feeds.Link{Href: makeObsidianUrl(hl.Title.String)},
 			Author:      &feeds.Author{Name: hl.Author.String},
-			Created:     now.Add(-time.Second * time.Duration(i)), //today.Add(time.Duration(i)),
+			Created:     now.Add(-time.Second * time.Duration(i)),
 		}
 		result = append(result, item)
 	}
 	return result, nil
 }
 
-func GenerateFeed(count int) (string, error) {
+func (r *RSS) GenerateFeed(count int) (string, error) {
 	now := time.Now()
 
 	feed := &feeds.Feed{
@@ -50,13 +65,13 @@ func GenerateFeed(count int) (string, error) {
 		Created:     now,
 	}
 
-	items, err := randomNotes(count)
+	items, err := r.randomNotes(count)
 
 	if err != nil {
 		return "", err
 	}
 	feed.Items = items
-	rss, err := feed.ToRss()
+	rss, err := feed.ToJSON()
 	if err != nil {
 		log.Fatal(err)
 	}
