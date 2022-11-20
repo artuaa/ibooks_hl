@@ -71,7 +71,7 @@ func (r *RSS) GenerateFeed(count int) (string, error) {
 		return "", err
 	}
 	feed.Items = items
-	rss, err := feed.ToJSON()
+	rss, err := feed.ToRss()
 	if err != nil {
 		log.Fatal(err)
 	}

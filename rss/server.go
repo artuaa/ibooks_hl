@@ -20,7 +20,7 @@ func RunServer() error {
 
 //routes
 func root(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("content-type", "application/json")
+	w.Header().Set("content-type", "application/rss+xml")
 	r := New(&ibooks.IBooksStorage{})
 	rss, err := r.GenerateFeed(3)
 	if err != nil {
