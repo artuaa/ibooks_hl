@@ -5,7 +5,10 @@ import (
 	"highlights/ibooks"
 	"io"
 	"net/http"
+	"strconv"
 )
+
+var defaultCount = 3
 
 type Web struct {
 	rss RSS
@@ -19,7 +22,14 @@ func NewWeb() *Web {
 func (web *Web) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/rss/highlights" {
 		w.Header().Set("content-type", "application/rss+xml")
-		rss, err := web.rss.GenerateFeed(3)
+		var count = defaultCount
+		queryParams := r.URL.Query()
+		if value, ok := queryParams["count"]; ok {
+			if v, err := strconv.Atoi(value[0]); err == nil {
+				count = v
+			}
+		}
+		rss, err := web.rss.GenerateFeed(count)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 		} else {
