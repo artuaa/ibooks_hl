@@ -11,32 +11,31 @@ import (
 )
 
 type RSS struct {
-	storage ibooks.Storage
+	storage *ibooks.Storage
 }
 
-func New(s ibooks.Storage) RSS {
+func New(s *ibooks.Storage) RSS {
 	return RSS{storage: s}
 }
 
 func makeObsidianUrl(title string) string {
 	v := url.Values{}
-	v.Add("file", "book_highligths/"+title+".md")
+	v.Add("file", "book_highlights/"+title+".md")
 	v.Add("vault", "vault")
 	return "obsidian://open?" + v.Encode()
 }
 
-func (r *RSS) randomNotes(count int) ([]*feeds.Item, error) {
+func (r *RSS) randomNotes(count int, at time.Time) ([]*feeds.Item, error) {
 	hls, err := r.storage.LoadHighlights()
 	if err != nil {
 		return nil, err
 	}
-	result := []*feeds.Item{}
+	var result []*feeds.Item
 	// HACK:
 	if len(hls) < count {
 		count = len(hls)
 	}
-	rand.Seed(time.Now().UnixNano())
-	now := time.Now()
+	rand.Seed(at.Unix())
 	for i := 0; i < count; i++ {
 		idx := rand.Intn(len(hls))
 		hl := hls[idx]
@@ -46,7 +45,7 @@ func (r *RSS) randomNotes(count int) ([]*feeds.Item, error) {
 			Description: hl.Text.String,
 			Link:        &feeds.Link{Href: makeObsidianUrl(hl.Title.String)},
 			Author:      &feeds.Author{Name: hl.Author.String},
-			Created:     now.Add(-time.Second * time.Duration(i)),
+			Created:     at.Add(time.Second * time.Duration(i)),
 		}
 		result = append(result, item)
 	}
@@ -55,17 +54,17 @@ func (r *RSS) randomNotes(count int) ([]*feeds.Item, error) {
 
 func (r *RSS) GenerateFeed(count int) (string, error) {
 	now := time.Now()
+	createdAt := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 
 	feed := &feeds.Feed{
-		Title: "Artua books highlights",
-		// TODO: add link
+		Title:       "Books highlights",
 		Link:        &feeds.Link{Href: "http://google.com"},
 		Description: "quotes and words",
 		Author:      &feeds.Author{Name: "Artur Sharipov", Email: "theartua@gmail.com"},
-		Created:     now,
+		Created:     createdAt,
 	}
 
-	items, err := r.randomNotes(count)
+	items, err := r.randomNotes(count, createdAt)
 
 	if err != nil {
 		return "", err

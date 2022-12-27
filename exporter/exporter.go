@@ -30,25 +30,25 @@ func saveToFile(path string, hls []ibooks.Highlight) error {
 			f.WriteString(fmt.Sprintf("> %s\n%s\n", strings.Replace(v.Text.String, "\n", "\n> ", -1), v.Note.String))
 		}
 	}
-	if err := f.Close(); err != nil {
-		return err
-	}
+	//if err := f.Close(); err != nil {
+	//	return err
+	//}
 	return nil
 }
 
-// Exporter ibooks notes and highlights to obsidian vault
+// ExportNotes Export ibooks notes and highlights to obsidian vault
 func ExportNotes() {
 	if len(os.Args) < 2 {
 		log.Fatal("Please specify notes path")
 	}
-	notes_path := os.Args[1]
+	notesPath := os.Args[1]
 
-	cmd := exec.Command("mkdir", "-p", notes_path)
+	cmd := exec.Command("mkdir", "-p", notesPath)
 	err := cmd.Run()
 	if err != nil {
-		log.Fatalf("Can't create target directory '%s' %s", notes_path, err)
+		log.Fatalf("Can't create target directory '%s' %s", notesPath, err)
 	}
-	storage := ibooks.IBooksStorage{}
+	storage := ibooks.Storage{}
 	highlights, err := storage.LoadHighlights()
 	if err != nil {
 		log.Fatal(err)
@@ -57,7 +57,7 @@ func ExportNotes() {
 		if len(hls) < 12 {
 			continue
 		}
-		path := notes_path + "/" + title + ".md"
+		path := notesPath + "/" + title + ".md"
 		err := saveToFile(path, hls)
 		if err != nil {
 			log.Fatal(err)

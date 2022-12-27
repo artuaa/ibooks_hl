@@ -10,9 +10,10 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type Storage interface {
-	LoadHighlights() ([]Highlight, error)
-}
+var (
+	annotationsPath = "/Library/Containers/com.apple.iBooksX/Data/Documents/AEAnnotation/AEAnnotation_v10312011_1727_local.sqlite"
+	libraryPath     = "/Library/Containers/com.apple.iBooksX/Data/Documents/BKLibrary/BKLibrary-1-091020131601.sqlite"
+)
 
 type Highlight struct {
 	Note    sql.NullString `db:"note"`
@@ -22,18 +23,23 @@ type Highlight struct {
 	Chapter sql.NullString `db:"chapter"`
 }
 
-type IBooksStorage struct {
-
+type Storage struct {
+	annotationsPath string
+	libraryPath     string
 }
 
-func (s *IBooksStorage) LoadHighlights() ([]Highlight, error) {
+func NewStorage() *Storage {
+	return &Storage{
+		annotationsPath: annotationsPath,
+		libraryPath:     libraryPath,
+	}
+}
+
+func (s *Storage) LoadHighlights() ([]Highlight, error) {
 	homedir, err := os.UserHomeDir()
 	if err != nil {
 		return nil, err
 	}
-	annotations_path := homedir + "/Library/Containers/com.apple.iBooksX/Data/Documents/AEAnnotation/AEAnnotation_v10312011_1727_local.sqlite"
-	library_path := homedir + "/Library/Containers/com.apple.iBooksX/Data/Documents/BKLibrary/BKLibrary-1-091020131601.sqlite"
-
 	query := `select
 	--ZANNOTATIONASSETID as asset_id,
 	ZTITLE as title,
@@ -51,12 +57,12 @@ func (s *IBooksStorage) LoadHighlights() ([]Highlight, error) {
 	where selected_text is not null
 	order by ZANNOTATIONASSETID, ZPLLOCATIONRANGESTART;`
 
-	db, err := sqlx.Connect("sqlite3", annotations_path)
+	db, err := sqlx.Connect("sqlite3", homedir+s.annotationsPath)
 	defer db.Close()
 	if err != nil {
 		return nil, fmt.Errorf("open db error: %s", err)
 	}
-	_, err = db.Exec(fmt.Sprintf("attach database '%s' as books;", library_path))
+	_, err = db.Exec(fmt.Sprintf("attach database '%s' as books;", homedir+s.libraryPath))
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +71,7 @@ func (s *IBooksStorage) LoadHighlights() ([]Highlight, error) {
 	if err != nil {
 		return nil, err
 	}
-	result := []Highlight{}
+	var result []Highlight
 	for rows.Next() {
 		hl := Highlight{}
 		err = rows.StructScan(&hl)
