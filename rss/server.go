@@ -1,9 +1,9 @@
 package rss
 
 import (
-	"fmt"
 	"highlights/ibooks"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -21,6 +21,7 @@ func NewWeb() *Web {
 
 func (web *Web) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/rss/highlights" {
+		log.Printf("request %s", r.URL.Path)
 		w.Header().Set("content-type", "application/rss+xml")
 		var count = defaultCount
 		queryParams := r.URL.Query()
@@ -31,6 +32,7 @@ func (web *Web) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		rss, err := web.rss.GenerateFeed(count)
 		if err != nil {
+			log.Printf("generate feed error: %v", err)
 			w.WriteHeader(http.StatusBadRequest)
 		} else {
 			w.WriteHeader(http.StatusOK)
@@ -44,7 +46,7 @@ func (web *Web) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func RunServer() error {
 	w := NewWeb()
 	port := "9999"
-	fmt.Println("listening on port: ", port)
+	log.Printf("server started on port: %s", port)
 	err := http.ListenAndServe(":"+port, w)
 	if err != nil {
 		return err

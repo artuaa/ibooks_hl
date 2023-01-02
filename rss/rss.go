@@ -1,10 +1,11 @@
 package rss
 
 import (
+	"fmt"
 	"highlights/ibooks"
-	"log"
 	"math/rand"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/gorilla/feeds"
@@ -25,10 +26,18 @@ func makeObsidianUrl(title string) string {
 	return "obsidian://open?" + v.Encode()
 }
 
+func wrapSentence(s string) string {
+	if strings.HasSuffix(s, ".") {
+		return s
+	} else {
+		return s + "..."
+	}
+}
+
 func (r *RSS) randomNotes(count int, at time.Time) ([]*feeds.Item, error) {
 	hls, err := r.storage.LoadHighlights()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("can't load highlights %w", err)
 	}
 	var result []*feeds.Item
 	// HACK:
@@ -42,7 +51,7 @@ func (r *RSS) randomNotes(count int, at time.Time) ([]*feeds.Item, error) {
 
 		item := &feeds.Item{
 			Title:       hl.Title.String,
-			Description: hl.Text.String,
+			Description: wrapSentence(hl.Text.String),
 			Link:        &feeds.Link{Href: makeObsidianUrl(hl.Title.String)},
 			Author:      &feeds.Author{Name: hl.Author.String},
 			Created:     at.Add(time.Second * time.Duration(i)),
@@ -67,12 +76,12 @@ func (r *RSS) GenerateFeed(count int) (string, error) {
 	items, err := r.randomNotes(count, createdAt)
 
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("can't load random notes. count %d, date %v %w", count, createdAt, err)
 	}
 	feed.Items = items
 	rss, err := feed.ToRss()
 	if err != nil {
-		log.Fatal(err)
+		return "", fmt.Errorf("can't generate rss feed %w", err)
 	}
 
 	return rss, nil
